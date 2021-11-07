@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: myiamges-backend
+  profiles:
+    active: dev
+  datasource:
+    url: jdbc:mysql://localhost:3306/images?characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false
+    username: root
+    password: root
+    druid:
+      max-wait: 30000
+      query-timeout: 10
+      validation-query: SELECT 1
+      use-global-data-source-stat: true
+    driver-class-name: com.mysql.jdbc.Driver
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+#  redis:
+#    database: 0
+#    host: 127.0.0.1
+#    port: 6379
+#    timeout: 3000
+server:
+  port: 7777
+  servlet:
+    context-path: /api
+mybatis-plus:
+  global-config:
+    db-config:
+      logic-delete-field: isDelete  # 逻辑删除配置
+      logic-delete-value: 1 # isDelete字段为1表示已删除
+      logic-not-delete-value: 0 # 为0表示未删除
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  mapper-locations: classpath:com/cao/myimages/mapper/*.xml
