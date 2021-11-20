@@ -9,6 +9,7 @@ import com.cao.myimages.result.EmojiResult;
 import com.cao.myimages.constant.MessageConstant;
 import com.cao.myimages.entity.Emoji;
 import com.cao.myimages.service.EmojiService;
+import com.cao.myimages.service.RedisService;
 import com.cao.myimages.utils.FTPUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -30,13 +32,16 @@ import java.util.UUID;
  */
 @RestController
 @RequestMapping(value = "/emoji")
-@CrossOrigin(origins = {"http://127.0.0.1:8080","http://106.14.136.249:8080","http://106.14.136.249"})
+@CrossOrigin(origins = {"http://127.0.0.1:8080","http://106.14.136.249:8080","http://106.14.136.249","http://localhost:8080"})
 public class EmojiController {
     @Resource
     private EmojiService emojiService;
 
     @Resource
     private JedisPool jedisPool;
+
+    @Resource
+    RedisService redisService;
 
     /**
      * 添加emoji
@@ -60,12 +65,12 @@ public class EmojiController {
     /**
      * 删除ById
      *
-     * @param map
+     * @param emoji
      * @return EmojiResult
      */
     @PostMapping("/delete")
-    public EmojiResult delete(@RequestBody Map<String,Integer> map) {
-        Integer id = map.get("id");
+    public EmojiResult delete(@RequestBody Emoji emoji) {
+        Integer id = emoji.getId();
         System.out.println(id);
         if (id == null) {
             return new EmojiResult(false, MessageConstant.EMOJI_DELETE_FAILED);
@@ -103,27 +108,46 @@ public class EmojiController {
         System.out.println(emojiQueryRequest);
         int pageNum = emojiQueryRequest.getPageNum();
         int pageSize = emojiQueryRequest.getPageSize();
+        Integer reviewStatus = emojiQueryRequest.getReviewStatus();
+        String tag = emojiQueryRequest.getTag();
         final int MAX_VALUE = 777;
         if(pageNum*pageSize>=MAX_VALUE){
             return new EmojiResult(false,"超出最大查询数");
         }
         String name = emojiQueryRequest.getName();
         QueryWrapper<Emoji> queryWrapper = new QueryWrapper();
-        if(StringUtils.isNoneBlank(name)){
-            queryWrapper.like("name",name);
-        }
-        String tag = emojiQueryRequest.getTag();
-        if(StringUtils.isNoneBlank(tag)){
-            queryWrapper.like("tag",tag);
-        }
-        Integer reviewStatus = emojiQueryRequest.getReviewStatus();
-        if(reviewStatus!=null){
-            queryWrapper.eq("review_status",reviewStatus);
-        }
-        queryWrapper.orderByDesc("create_time");
+        if(StringUtils.isNoneBlank(name)||(StringUtils.isBlank(name)&&StringUtils.isBlank(tag))) {
+            if(!StringUtils.isBlank(name)) {
+                queryWrapper.like("name", name);
+            }
 
-        Page<Emoji> page = emojiService.page(new Page<Emoji>(pageNum,pageSize),queryWrapper);
-        return new EmojiResult(true, MessageConstant.EMOJI_QUERY_SUCCESS, page);
+            if (StringUtils.isNoneBlank(tag)) {
+                queryWrapper.like("tag", tag);
+            }
+            if (reviewStatus != null) {
+                queryWrapper.eq("review_status", reviewStatus);
+            }
+            queryWrapper.orderByDesc("create_time");
+            Page<Emoji> page = emojiService.page(new Page<Emoji>(pageNum, pageSize), queryWrapper);
+            return new EmojiResult(true, MessageConstant.EMOJI_QUERY_SUCCESS, page);
+        }
+        else{
+            Page listPage = redisService.getListPage(tag,pageNum,pageSize);
+            if(listPage!=null&&listPage.getRecords().size()>0){
+                System.out.println("redis");
+                System.out.println(listPage);
+                return new EmojiResult(true,MessageConstant.EMOJI_QUERY_SUCCESS,listPage);
+            }
+            else {
+                System.out.println("db");
+                List<Emoji> list = emojiService.getByTag(tag,reviewStatus);
+                for (Emoji emoji : list) {
+                    redisService.addList(tag,emoji);
+                }
+                Page page = redisService.getListPage(tag,pageNum,pageSize);
+                return new EmojiResult(true,MessageConstant.EMOJI_QUERY_SUCCESS,page);
+            }
+        }
     }
 
     /**

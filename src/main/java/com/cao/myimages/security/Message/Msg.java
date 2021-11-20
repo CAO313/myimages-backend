@@ -64,6 +64,11 @@ public class Msg implements Serializable {
         Msg result=new Msg();
         result.setCode(200);
         result.setMessage(message);
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
+//        for (GrantedAuthority authority : authorities) {
+//            result.setRole(authority);
+//        }
         result.setRole("role_admin");
         return result;
     }

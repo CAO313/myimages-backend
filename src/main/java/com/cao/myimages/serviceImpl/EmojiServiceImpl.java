@@ -7,6 +7,7 @@ import com.cao.myimages.service.EmojiService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * <p>
@@ -39,5 +40,10 @@ public class EmojiServiceImpl extends ServiceImpl<EmojiMapper, Emoji> implements
             e.printStackTrace();
         }
         return true;
+    }
+
+    @Override
+    public List<Emoji> getByTag(String tag, Integer reviewStatus) {
+        return emojiMapper.getByTag( tag,  reviewStatus);
     }
 }

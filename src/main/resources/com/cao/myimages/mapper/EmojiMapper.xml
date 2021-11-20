@@ -7,10 +7,13 @@
         <result column="url" property="url" />
         <result column="name" property="name" />
         <result column="userId" property="userId" />
-        <result column="tags" property="tags" />
+        <result column="tag" property="tag" />
         <result column="reviewStatus" property="reviewStatus" />
         <result column="createTime" property="createTime" />
         <result column="isDelete" property="isDelete" />
         <result column="updateTime" property="updateTime" />
     </resultMap>
+    <select id="getByTag" resultType="com.cao.myimages.entity.Emoji">
+        select * from emoji where tag = #{tag} and review_status = #{reviewStatus}
+    </select>
 </mapper>

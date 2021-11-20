@@ -25,4 +25,6 @@ public interface EmojiMapper extends BaseMapper<Emoji> {
     void updateReviewStatusById(Integer id,Integer status);
     @Select("select * from emoji")
     List<Emoji> getAll();
+
+    List<Emoji> getByTag(String tag, Integer reviewStatus);
 }

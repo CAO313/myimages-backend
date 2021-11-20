@@ -5,6 +5,8 @@ import com.cao.myimages.entity.Emoji;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+
 /**
  * <p>
  * 表情 服务类
@@ -16,4 +18,6 @@ import org.apache.ibatis.annotations.Update;
 public interface EmojiService extends IService<Emoji> {
     boolean updateNameByUrl(String name, String url);
     boolean updateReviewStatusById(Integer id,Integer status);
+
+    List<Emoji> getByTag(String tag, Integer reviewStatus);
 }
